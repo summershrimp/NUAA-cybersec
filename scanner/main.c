@@ -22,6 +22,8 @@
 
 int do_connect_scan(in_addr_t addr, int port);
 void set_timeout(int sec);
+int scan_ip(unsigned int ip);
+int print_help(char *argv0);
 void *connect_scan(void *args);
 struct timeval tout;
 
@@ -31,34 +33,75 @@ typedef struct {
     int result;
 } scan_args;
 
-
 int main(int argc, const char * argv[]) {
-    int i, j;
-    in_addr_t addr = inet_addr("127.0.0.1");
-    set_timeout(2);
+    unsigned int start, end, i, j, k, timeout = 2;
+    if(argc < 3)
+        return print_help(argv[0]);
+    start = ntohl(inet_addr(argv[1]));
+    end = ntohl(inet_addr(argv[2]));
+    if (i == INADDR_NONE || j == INADDR_NONE)
+        return print_help(argv[0]);
+    else if(i>j)
+        return print_help(argv[0]);
+    for (i=3; i<argc; ++i)
+    {
+        if(strstr(argv[i], "-t") == argv[i])
+            if(i +1 < argc)
+            {
+                if(EOF == sscanf(argv[i + 1], "%d", &timeout))
+                    return print_help(argv[0]);
+            }
+            else
+                return print_help(argv[0]);
+        else if(strstr(argv[i], "--timeout="))
+            if(EOF == sscanf(argv[i], "--timeout=%d", &timeout))
+                return print_help(argv[0]);
+    }
 
+    set_timeout(timeout);
+    for(k = start; k <= end; ++k)
+    {
+        scan_ip(htonl(k));
+    }
+
+    return 0;
+}
+
+int scan_ip(in_addr_t addr)
+{
+    int i, j;
     scan_args args_list[100];
     pthread_t pth_list[100];
+    struct in_addr i_addr;
+    i_addr.s_addr = addr;
+    printf("IP: %s \n", inet_ntoa(i_addr));
     for(i=0; i<600; ++i)
     {
         for(j = 0; j<100; ++j)
         {
             args_list[j].addr = addr;
             args_list[j].tgt_port = i * 100 + (j + 1);
-            //printf("sanning %d\n",args_list[j].tgt_port);
+            printf("scanning %d\r",args_list[j].tgt_port);
+            fflush(stdin);
             pthread_create(pth_list + j, NULL, connect_scan, args_list + j);
         }
         for(j = 0; j<100; ++j)
         {
             pthread_join(pth_list[j], NULL);
             if(args_list[j].result)
-                printf("Port%7d: OPEN\n", args_list[j].tgt_port);
+                printf("\rPort%7d: OPEN\n", args_list[j].tgt_port);
         }
     }
-    return 0;
+    return 0;   
 }
 
-
+int print_help(char *argv0)
+{
+    printf("Usage: %s start_ip end_ip [options]\n", argv0);
+    printf("\t-t n\n");
+    printf("\t--timeout=n\t\t Set timeout to n, default: 2.\n");
+    return 0;
+}
 
 void *connect_scan(void *args)
 {

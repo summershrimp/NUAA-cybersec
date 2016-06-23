@@ -2,6 +2,7 @@
 #include <stdlib.h>    
 #include <string.h>    
 #include <unistd.h>
+#include <errno.h>
 #include <netinet/ip_icmp.h>   
 #include <netinet/udp.h>   
 #include <netinet/tcp.h>   
@@ -38,12 +39,13 @@ int main() {
     unsigned char *buffer = (unsigned char *) malloc(2048); 
 
     logfile = fopen("log.txt", "w");
-    if (logfile == NULL) printf("Unable to create file.");
+    if (logfile == NULL) 
+        printf("Unable to create file.");
     printf("Starting...\n");
     
     sock_raw = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (sock_raw < 0) {
-        printf("Socket Error\n");
+        printf("Socket Error: %s\n", strerror(errno));
         return 1;
     }
     while (1) {
