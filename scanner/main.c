@@ -1,6 +1,6 @@
 //
 //  main.c
-//  seclab-scanner
+//  scanner
 //
 //  Created by Summer on 6/9/16.
 //  Copyright © 2016 summer. All rights reserved.
